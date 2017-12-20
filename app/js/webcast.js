@@ -17,8 +17,9 @@ class Webcast {
         }
 
         this.settingsAnalyze = {
-            step: 5,
-            numberOfStepTesseract: 3
+            step: 2,
+            numberOfStepTesseract: 3,
+            numberOfErrorAccepted: 5
         }
 
         this.$canvas = document.createElement('canvas')
@@ -31,6 +32,7 @@ class Webcast {
         this.totalStepForAnalyze = 0
         this.stepPassed = 0
 
+        this.errorEncounter = 0
         this.arrayTextAnalyzed = []
 
         this.readVideoFile(this.$webcast.querySelector(`input#${videoInputID}`).files[0])
@@ -41,12 +43,16 @@ class Webcast {
     {
         this.$video.controls = true
         this.$video.autoplay = true
+        /*
         const reader = new FileReader()
         reader.addEventListener('load', () => {
             this.$video.src = reader.result
             this.$webcast.querySelector('.webcast-video-container').appendChild(this.$video)
         })
         reader.readAsDataURL(videoFile)
+        */
+        this.$video.src = 'http://localhost/dev/spacex/H2-P2021-E12-SpaceX-OCR/app/video/crs2.mp4'
+        this.$webcast.querySelector('.webcast-video-container').appendChild(this.$video)
     }
 
     unlockButton(group)
@@ -137,7 +143,8 @@ class Webcast {
                 }
             }).then((result) =>
             {
-                let textAnalyzedFormat = this.formatText(result.text, this.arrayTextAnalyzed[this.arrayTextAnalyzed.length-1])
+                let textAnalyzedFormat = this.formatText(result.text)
+                textAnalyzedFormat.text = result.text
                 textAnalyzedFormat.time = Math.floor(this.$video.currentTime - this.startTime)
                 this.arrayTextAnalyzed.push(textAnalyzedFormat)
                 this.progressBarUpdate()
@@ -167,70 +174,96 @@ class Webcast {
         }).then(() => console.log(this.arrayTextAnalyzed))
     }
 
-    formatText(text, lastInput)
+    formatText(text)
     {
+        let lastInput
+        if(this.arrayTextAnalyzed.length > 0)
+        {
+            lastInput = this.arrayTextAnalyzed[this.arrayTextAnalyzed.length-1]
+        }
+        else
+        {
+            lastInput = {stage: 2, speed: 0, altitude: 0}
+        }
         let obj = {}
         text = text.split("\n")
-        let countNumber = 0
-        for(const char of text[2]) {
-            if(/^\d/.test(char)) { countNumber++ }
-        }
-        if(countNumber >= 4)
+        if(text.length >= 4)
         {
-            text[2] = text[2].replace(/[D|o|O]/g, "0")
-            text[2] = text[2].replace(/ /g, "")
-            text[2] = text[2].replace(/S/g, "5")
-            text[2] = text[2].replace(/B/g, "8")
-            if(/(^[\d]{5})/.test(text[2]))
+            this.errorEncounter = 0
+            let countNumber = 0
+            for(const char of text[2]) {
+                if(/^\d/.test(char)) { countNumber++ }
+            }
+            
+            if(countNumber >= 4 && countNumber <= 7)
             {
-                obj.speed = parseInt(RegExp.$1)
-                text[2] = text[2].slice(5)
-                if(/(^[\d]{2}).*([\d]$)/.exec(text[2]))
+                text[2] = text[2].replace(/[D|o|O]/g, "0")
+                text[2] = text[2].replace(/ /g, "")
+                text[2] = text[2].replace(/S/g, "5")
+                text[2] = text[2].replace(/B/g, "8")
+                if(/(^[\d]{5})/.test(text[2]))
                 {
-                    obj.altitude = parseFloat(`${RegExp.$1}.${RegExp.$2}`)
-                }
-                else if(lastInput != undefined)
-                {
-                    obj.altitude = lastInput.altitude
+                    obj.speed = parseInt(RegExp.$1)
+                    text[2] = text[2].slice(5)
+                    if(/(^[\d]{2}).*([\d]$)/.exec(text[2]))
+                    {
+                        obj.altitude = parseFloat(`${RegExp.$1}.${RegExp.$2}`)
+                    }
+                    else
+                    {
+                        obj.altitude = lastInput.altitude
+                    }
                 }
                 else
                 {
-                    return {stage: 2, speed: 0, altitude: 0}
+                    obj.speed = lastInput.speed
+                    obj.altitude = lastInput.altitude
                 }
             }
-            else if(lastInput != undefined)
+            else
             {
                 obj.speed = lastInput.speed
                 obj.altitude = lastInput.altitude
             }
+        
+            if(/^stage ?([1|2])/i.test(text[0]))
+            {
+                obj.stage = parseInt(RegExp.$1)
+            }
             else
             {
-                return {stage: 2, speed: 0, altitude: 0}
+                obj.stage = lastInput.stage
+            }
+
+            if(obj.speed != undefined && obj.altitude != undefined && obj.stage != undefined)
+            {
+                return obj
+            }
+            else
+            {
+                if(this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
+                {
+                    this.errorEncounter++
+                    return lastInput
+                }
+                else
+                {
+                    return {error: 'Data not available'}
+                }
             }
         }
-        else if(lastInput != undefined)
-        {
-            obj.speed = lastInput.speed
-            obj.altitude = lastInput.altitude
-        }
         else
         {
-            return {stage: 2, speed: 0, altitude: 0}
+            if(this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
+            {
+                this.errorEncounter++
+                return lastInput
+            }
+            else
+            {
+                return {error: 'Data not available'}
+            }
         }
-    
-        if(/^stage ?([1|2])/i.test(text[0]))
-        {
-            obj.stage = parseInt(RegExp.$1)
-        }
-        else if(lastInput != undefined)
-        {
-            obj.stage = lastInput.stage
-        }
-        else
-        {
-            return {stage: 2, speed: 0, altitude: 0}
-        }
-        return obj
     }
 
     calcTotalStepForAnalyze()

@@ -20,26 +20,53 @@
 
     <main class="container">
         <div class="form-row">
-            <div class="form-group col">
+            <div class="form-group col-lg col-sm-6">
                 <label for="missionName">Mission's name</label>
                 <input type="text" class="form-control" id="missionName" placeholder="Mission's Name">
             </div>
-            <div class="form-group col">
+            <div class="form-group col-lg col-sm-6">
                 <label for="missionID">ID</label>
                 <input type="text" class="form-control" id="missionID" placeholder="ID">
             </div>
-            <div class="form-group col">
+            <div class="form-group col-lg col-sm-6">
                 <label for="missionID">Date</label>
                 <input type="date" class="form-control" id="missionDate" placeholder="Date">
             </div>
-            <div class="form-group col">
+            <div class="form-group col-lg col-sm-6">
                 <label for="missionDate">Hour</label>
-                <input type="time" class="form-control" id="missionDate" placeholder="Heure">
+                <input type="time" class="form-control" id="missionDate" placeholder="Hour">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-lg col-sm-6">
+                <label for="missionRocket">Rocket</label>
+                <select class="form-control" id="missionRocket">
+                    <option>Falcon 9</option>
+                    <option>Falcon Heavy</option>
+                    <option>Dragon</option>
+                </select>
+            </div>
+            <div class="form-group col-lg col-sm-6">
+                <label for="missionRocket">Success</label>
+                <select class="form-control" id="missionRocket">
+                    <option>True</option>
+                    <option>False</option>
+                </select>
+            </div>
+            <div class="form-group col-lg col-sm-12">
+                <label for="missionPlace">Place</label>
+                <input type="time" class="form-control" id="missionPlace" placeholder="Place">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col">
+                <label for="missionDesc">Description</label>
+                <textarea class="form-control" id="missionDesc" rows="3"></textarea>
             </div>
         </div>
         <div class="webcast">
             <div class="form-row">
-                <div class="form-group col-5">
+                <div class="form-group col">
                     <label for="video">Video</label>
                     <div class="input-group">
                         <input type="file" class="form-control" id="webcast-video-file" placeholder="Video file">
@@ -50,11 +77,11 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col col-9 webcast-video-container">
+                <div class="col-lg-9 col-sm-12 webcast-video-container">
                 </div>
-                <div class="col col-3">
+                <div class="col-lg-3 col-sm-12">
                     <div class="form-row">
-                        <div class="form-group col">
+                        <div class="form-group col-lg-12 col-sm-6">
                             <label for="webcast-start-time">Launch time</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="webcast-start-time" value="0">
@@ -63,9 +90,7 @@
                                 </span>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col">
+                        <div class="form-group col-lg-12 col-sm-6">
                             <label for="webcast-end-time">End time</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="webcast-end-time" value="0">
