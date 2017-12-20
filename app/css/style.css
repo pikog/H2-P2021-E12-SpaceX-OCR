@@ -1,0 +1,19 @@
+body
+{
+    padding-top: 5rem;
+}
+.webcast canvas, .webcast video
+{
+    width: 100%;
+}
+
+.webcast .webcast-progress-bar
+{
+    visibility: hidden;
+}
+
+.webcast .webcast-progress-bar .progress-bar
+{
+    transition: width 0.6s ease-out, background-color 0.6s ease-out;
+}
+
