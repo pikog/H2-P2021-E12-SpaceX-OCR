@@ -345,6 +345,7 @@ class Webcast {
                     <option value="Stage 1 Boostback">Stage 1 Boostback</option>
                     <option value="Stage 1 entry burn">Stage 1 entry burn</option>
                     <option value="Stage 1 landing">Stage 1 landing</option>
+                    <option value="Stage 2 Engine cutoff">Stage 2 Engine cutoff</option>
                     <option value="Deploy">Deploy</option>
                 </select>
             </div>
