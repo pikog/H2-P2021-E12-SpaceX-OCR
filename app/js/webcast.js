@@ -57,6 +57,7 @@ class Webcast {
 
     readVideoFile()
     {
+        this.$webcast.querySelector('button.webcast-read-video-file-btn').disabled = true
         this.$video.controls = true
         this.$video.src = `./video/${this.$selectVideo.value}`
         this.$webcast.querySelector('.webcast-video-container').appendChild(this.$video)
@@ -152,7 +153,6 @@ class Webcast {
             }).then((result) =>
             {
                 let textAnalyzedFormat = this.formatText(result.text)
-                textAnalyzedFormat.text = result.text
                 this.arrayTextAnalyzed.push(textAnalyzedFormat)
                 this.progressBarUpdate()
                 resolve()
@@ -231,21 +231,18 @@ class Webcast {
                     else
                     {
                         obj.altitude = lastInput.altitude
-                        console.log("1", Math.floor(this.$video.currentTime - this.startTime))
                     }
                 }
                 else
                 {
                     obj.speed = lastInput.speed
                     obj.altitude = lastInput.altitude
-                    console.log("2", Math.floor(this.$video.currentTime - this.startTime))
                 }
             }
             else
             {
                 obj.speed = lastInput.speed
                 obj.altitude = lastInput.altitude
-                console.log("3", Math.floor(this.$video.currentTime - this.startTime))
             }
         
             if(/^stage ?([1|2])/i.test(text[0]))
@@ -255,7 +252,6 @@ class Webcast {
             else
             {
                 obj.stage = lastInput.stage
-                console.log("4", Math.floor(this.$video.currentTime - this.startTime))
             }
 
             if(obj.speed != undefined && obj.altitude != undefined && obj.stage != undefined)
@@ -268,7 +264,6 @@ class Webcast {
             {
                 if(++this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
                 {
-                    console.log("5", Math.floor(this.$video.currentTime - this.startTime))
                     return {speed: lastInput.speed, altitude: lastInput.altitude, stage: lastInput.stage, time: Math.floor(this.$video.currentTime - this.startTime)}
                 }
                 else
@@ -281,7 +276,6 @@ class Webcast {
         {
             if(++this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
             {
-                console.log("6", Math.floor(this.$video.currentTime - this.startTime))
                 return {speed: lastInput.speed, altitude: lastInput.altitude, stage: lastInput.stage, time: Math.floor(this.$video.currentTime - this.startTime)}
             }
             else
@@ -309,7 +303,6 @@ class Webcast {
         {
             this.totalStepForAnalyze++
         }
-        console.log(this.totalStepForAnalyze)
     }
 
     progressBarUpdate()
@@ -334,16 +327,18 @@ class Webcast {
 
         this.$telemetrySection.style.display = 'none'
         this.$stepSection.style.display = 'flex'
+        this.$webcast.querySelector('.webcast-json-btn-section').style.display = 'flex'
         this.$video.controls = true
+        this.$video.currentTime = this.startTime
         this.generateNewStep()
     }
 
     generateNewStep()
     {
-        const stepHTML = `<div class="col-md-6 webcast-step webcast-step-${this.stepId}">
+        const stepHTML = `<div class="col-md-6 webcast-step webcast-step-${this.stepId}" data-step-id="${this.stepId}">
             <div class="form-group">
                 <label for="webcast-step-name-${this.stepId}">Step ${this.stepId}</label>
-                <select class="form-control" id="webcast-step-name-${this.stepId}">
+                <select class="form-control" id="webcast-step-name-${this.stepId}" name="step-${this.stepId}-name">
                     <option value="Startup">Startup</option>
                     <option value="Liftoff">Liftoff</option>
                     <option value="Max-Q">Max-Q</option>
@@ -352,14 +347,14 @@ class Webcast {
             </div>
             <div class="form-group">
                 <div class="input-group">
-                    <input type="number" class="form-control" id="webcast-step-time-${this.stepId}" value="0">
+                    <input type="number" class="form-control" id="webcast-step-time-${this.stepId}" name="step-${this.stepId}-startTime" value="0">
                     <span class="input-group-btn">
                         <button class="btn btn-primary webcast-step-time-btn-${this.stepId}" type="button" onclick="webcast.setTimeInput('webcast-step-time-${this.stepId}')">Set</button>
                     </span>
                 </div>
             </div>
             <div class="form-group">
-                <textarea class="form-control" id="webcast-step-description-${this.stepId}" rows="3" placeholder="Description"></textarea>
+                <textarea class="form-control" id="webcast-step-description-${this.stepId}" name="step-${this.stepId}-description" rows="3" placeholder="Description"></textarea>
             </div>
         </div>`
         this.$stepSection.querySelector('.webcast-step-btn').insertAdjacentHTML('beforebegin', stepHTML)
@@ -373,5 +368,51 @@ class Webcast {
             this.$stepSection.querySelector(`.webcast-step-${--this.stepId}`).remove()
         }
 
+    }
+
+    generateJSON()
+    {
+        const namesOfData = ['name', 'id', 'date', 'hour', 'rocket', 'success', 'place', 'description', 'startTime', 'endTime']
+        const namesOfDataStep = ['name', 'startTime', 'description']
+
+        const obj = {}
+
+        for(const name of namesOfData)
+        {
+            let value = this.$webcast.querySelector(`[name=${name}]`).value
+            if(/Time/.test(name))
+            {
+                value = Math.floor(parseFloat(value))
+            }
+            else if(name == 'success')
+            {
+                value = (value == '1')
+            }
+            obj[name] = value
+        }
+        obj["telemetry"] = this.arrayTextAnalyzed
+        const arraySteps = []
+        for(let i = 0; i <= this.stepId - 1; i++)
+        {
+            const stepContainer = this.$stepSection.querySelector(`.webcast-step-${i}`)
+            const objStep = {}
+            for(const name of namesOfDataStep)
+            {
+                let value = stepContainer.querySelector(`[name=step-${i}-${name}]`).value
+                if(/Time/.test(name))
+                {
+                    value = Math.floor(parseFloat(value) - this.startTime)
+                }
+                objStep[name] = value
+            }
+            arraySteps.push(objStep)
+        }
+        obj["steps"] = arraySteps
+        const finalJSON = JSON.stringify(obj)
+        this.$webcast.querySelector('.webcast-entries').style.display = 'none'
+        this.$webcast.querySelector('.webcast-result').style.display = 'block'
+        this.$webcast.querySelector('.webcast-result textarea').textContent = finalJSON
+        let file = new File([finalJSON], this.$webcast.querySelector('[name=id]').value+'.json', {type: 'application/json'})
+        saveAs(file)
     }
 }
