@@ -1,4 +1,5 @@
 <?php
+    //List videos filename in video folder
     $array_videos = array();
     foreach (scandir("./video") as $file)
     {

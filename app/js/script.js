@@ -1,1 +1,1 @@
-let webcast = new Webcast()
+const webcast = new Webcast()

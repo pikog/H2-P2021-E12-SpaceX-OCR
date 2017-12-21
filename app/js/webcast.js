@@ -1,4 +1,5 @@
 class Webcast {
+    //Set global variable
     constructor()
     {
         this.$webcast = document.querySelector('.webcast')
@@ -44,6 +45,7 @@ class Webcast {
         this.completeSelectVideo()
     }
 
+    //Fill Select input whith file names in video folder
     completeSelectVideo()
     {
         for(const fileName of arrayVideoName)
@@ -55,6 +57,7 @@ class Webcast {
         }
     }
 
+    //Set src video with selected file
     readVideoFile()
     {
         this.$webcast.querySelector('button.webcast-read-video-file-btn').disabled = true
@@ -64,21 +67,22 @@ class Webcast {
         this.unlockButton('timing')
     }
 
+    //Unlock timing button
     unlockButton(group)
     {
-        if(group == 'timing') {
-            this.$webcast.querySelector('button.webcast-start-time-btn').disabled = false
-            this.$webcast.querySelector('button.webcast-end-time-btn').disabled = false
-            this.listenTimeInput()
-        }
+        this.$webcast.querySelector('button.webcast-start-time-btn').disabled = false
+        this.$webcast.querySelector('button.webcast-end-time-btn').disabled = false
+        this.listenTimeInput()
     }
 
+    //Set value of input with $video current time
     setTimeInput(inputID)
     {
         this.$webcast.querySelector(`input#${inputID}`).value = this.$video.currentTime
         this.verifyTimeInput()
     }
 
+    //Listen time input to verify if start < end
     listenTimeInput()
     {
         this.$inputStartTime.addEventListener('change', () => this.verifyTimeInput())
@@ -87,6 +91,7 @@ class Webcast {
         this.$inputEndTime.addEventListener('keydown', () => this.verifyTimeInput())
     }
 
+    //Verify time input and unlock analyze button
     verifyTimeInput()
     {
         if(!this.analyzeOngoing)
@@ -106,6 +111,7 @@ class Webcast {
         }
     }
 
+    //Launch set telemetry zone of video in canvas and launch tesseract analyze
     launchAnalyze()
     {
         this.$telemetrySection.style.display = 'flex'
@@ -121,6 +127,7 @@ class Webcast {
         this.loopAnalyze()
     }
 
+    //Seek in video
     setVideoTime(time)
     {
         return new Promise((resolve) =>
@@ -136,11 +143,13 @@ class Webcast {
         })
     }
 
+    //Draw telemetry zone in canvas
     drawVideoTelemetry()
     {
         this.ctx.drawImage(this.$video, this.telemetryZone.x, this.telemetryZone.y, this.telemetryZone.w, this.telemetryZone.h, 0, 0, this.telemetryZone.w, this.telemetryZone.h)
     }
 
+    //Analyze canvas with Tesseract
     analyzeCtx(ctx)
     {
         return new Promise((resolve) =>
@@ -160,6 +169,7 @@ class Webcast {
         })
     }
 
+    //Launch analyze and go to next frame
     loopAnalyze(time)
     {
         this.setVideoTime(time).then(() => 
@@ -188,6 +198,7 @@ class Webcast {
         })
     }
 
+    //Format text with regex to return an object with speed, altitude, stage and time
     formatText(text)
     {
         let lastInput
@@ -284,6 +295,7 @@ class Webcast {
         }
     }
 
+    //Set data not available to old item if there is more than 5 problems
     setDataNotAvailable()
     {
         for(let i = 1; i <= this.settingsAnalyze.numberOfErrorAccepted; i++)
@@ -294,6 +306,7 @@ class Webcast {
         return {error: 'Data not available', time:Math.floor(this.$video.currentTime - this.startTime)}
     }
 
+    //Calculate total step during the analyze with Tesseract
     calcTotalStepForAnalyze()
     {
         this.totalStepForAnalyze = this.settingsAnalyze.numberOfStepTesseract
@@ -304,6 +317,7 @@ class Webcast {
         }
     }
 
+    //Update progress bar when a new step is passed
     progressBarUpdate()
     {
         if(this.stepPassed < this.totalStepForAnalyze)
@@ -321,9 +335,9 @@ class Webcast {
         }
     }
 
+    //Go to step section: hide analyze section and generate a first step
     stepSection()
     {
-
         this.$telemetrySection.style.display = 'none'
         this.$stepSection.style.display = 'flex'
         this.$webcast.querySelector('.webcast-json-btn-section').style.display = 'flex'
@@ -332,6 +346,7 @@ class Webcast {
         this.generateNewStep()
     }
 
+    //Generate a new step form to HTML content
     generateNewStep()
     {
         const stepHTML = `<div class="col-md-6 webcast-step webcast-step-${this.stepId}" data-step-id="${this.stepId}">
@@ -364,6 +379,7 @@ class Webcast {
         this.stepId++
     }
 
+    //Remove last step from HTML content
     removeLastStep()
     {
         if(this.stepId > 1)
@@ -373,6 +389,7 @@ class Webcast {
 
     }
 
+    //Generate JSON with data inputs, telemetry data from analyze, steps data, ...
     generateJSON()
     {
         const namesOfData = ['name', 'id', 'date', 'hour', 'rocket', 'success', 'place', 'description', 'startTime', 'endTime']
