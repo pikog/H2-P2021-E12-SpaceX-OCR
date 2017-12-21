@@ -339,10 +339,13 @@ class Webcast {
             <div class="form-group">
                 <label for="webcast-step-name-${this.stepId}">Step ${this.stepId}</label>
                 <select class="form-control" id="webcast-step-name-${this.stepId}" name="step-${this.stepId}-name">
-                    <option value="Startup">Startup</option>
                     <option value="Liftoff">Liftoff</option>
                     <option value="Max-Q">Max-Q</option>
                     <option value="Main engine cutoff">Main engine cutoff</option>
+                    <option value="Stage 1 Boostback">Stage 1 Boostback</option>
+                    <option value="Stage 1 entry burn">Stage 1 entry burn</option>
+                    <option value="Stage 1 landing">Stage 1 landing</option>
+                    <option value="Dragon deploy">Dragon deploy</option>
                 </select>
             </div>
             <div class="form-group">
