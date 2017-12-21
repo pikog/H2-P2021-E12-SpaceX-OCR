@@ -33,3 +33,4 @@ localconfig.json
 
 #Big Files
 video/
+!video/exemple.mp4

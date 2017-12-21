@@ -213,7 +213,6 @@ class Webcast {
             for(const char of text[lineData]) {
                 if(/^\d/.test(char)) { countNumber++ }
             }
-            
             if(countNumber >= 4)
             {
                 text[lineData] = text[lineData].replace(/[D|o|O]/g, "0")
