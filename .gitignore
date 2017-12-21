@@ -32,5 +32,5 @@ npm-debug.log
 localconfig.json
 
 #Big Files
-video/
-!video/exemple.mp4
+*.mp4
+!exemple.mp4
