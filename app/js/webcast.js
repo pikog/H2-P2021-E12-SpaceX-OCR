@@ -1,13 +1,16 @@
 class Webcast {
-    constructor(videoInputID)
+    constructor()
     {
         this.$webcast = document.querySelector('.webcast')
         this.$video = document.createElement('video')
+        this.$selectVideo = this.$webcast.querySelector('select#webcast-video-name')
 
         this.$inputStartTime = this.$webcast.querySelector('input#webcast-start-time')
         this.startTime
         this.$inputEndTime = this.$webcast.querySelector('input#webcast-end-time')
         this.endTime
+
+        this.$telemetrySection = this.$webcast.querySelector('.webcast-telemetry-section')
 
         this.telemetryZone = {
             x: 1518,
@@ -35,24 +38,29 @@ class Webcast {
         this.errorEncounter = 0
         this.arrayTextAnalyzed = []
 
-        this.readVideoFile(this.$webcast.querySelector(`input#${videoInputID}`).files[0])
-        this.unlockButton('timing')
+        this.$stepSection = this.$webcast.querySelector('.webcast-step-section')
+        this.stepId = 0
+
+        this.completeSelectVideo()
     }
 
-    readVideoFile(videoFile)
+    completeSelectVideo()
+    {
+        for(const fileName of arrayVideoName)
+        {
+            const $option = document.createElement("option")
+            $option.value = fileName
+            $option.textContent = fileName
+            this.$selectVideo.appendChild($option)
+        }
+    }
+
+    readVideoFile()
     {
         this.$video.controls = true
-        this.$video.autoplay = true
-        /*
-        const reader = new FileReader()
-        reader.addEventListener('load', () => {
-            this.$video.src = reader.result
-            this.$webcast.querySelector('.webcast-video-container').appendChild(this.$video)
-        })
-        reader.readAsDataURL(videoFile)
-        */
-        this.$video.src = 'http://localhost/dev/spacex/H2-P2021-E12-SpaceX-OCR/app/video/crs2.mp4'
+        this.$video.src = `./video/${this.$selectVideo.value}`
         this.$webcast.querySelector('.webcast-video-container').appendChild(this.$video)
+        this.unlockButton('timing')
     }
 
     unlockButton(group)
@@ -86,25 +94,25 @@ class Webcast {
             const inputEndTimeValue = parseFloat(this.$inputEndTime.value)
             if(inputStartTimeValue < inputEndTimeValue)
             {
-                this.$webcast.querySelector('button.webcast-go-btn').disabled = false
+                this.$webcast.querySelector('button.webcast-launch-analyze-btn').disabled = false
                 this.startTime = inputStartTimeValue
                 this.endTime = inputEndTimeValue
             }
             else
             {
-                this.$webcast.querySelector('button.webcast-go-btn').disabled = true
+                this.$webcast.querySelector('button.webcast-launch-analyze-btn').disabled = true
             }
         }
     }
 
-    go()
+    launchAnalyze()
     {
-        this.$webcast.querySelector('button.webcast-go-btn').disabled = true
+        this.$telemetrySection.style.display = 'flex'
+        this.$webcast.querySelector('button.webcast-launch-analyze-btn').disabled = true
         this.analyzeOngoing = true
         this.$canvas.width = this.telemetryZone.w
         this.$canvas.height = this.telemetryZone.h
-        this.$webcast.querySelector('.webcast-canvas-container').appendChild(this.$canvas)
-        this.$video.autoplay = false
+        this.$telemetrySection.querySelector('.webcast-canvas-container').appendChild(this.$canvas)
         this.$video.controls = false
         this.$video.pause()
         this.$progressBar.style.visibility = 'visible'
@@ -127,7 +135,7 @@ class Webcast {
         })
     }
 
-    drawVideo()
+    drawVideoTelemetry()
     {
         this.ctx.drawImage(this.$video, this.telemetryZone.x, this.telemetryZone.y, this.telemetryZone.w, this.telemetryZone.h, 0, 0, this.telemetryZone.w, this.telemetryZone.h)
     }
@@ -145,7 +153,6 @@ class Webcast {
             {
                 let textAnalyzedFormat = this.formatText(result.text)
                 textAnalyzedFormat.text = result.text
-                textAnalyzedFormat.time = Math.floor(this.$video.currentTime - this.startTime)
                 this.arrayTextAnalyzed.push(textAnalyzedFormat)
                 this.progressBarUpdate()
                 resolve()
@@ -157,7 +164,7 @@ class Webcast {
     {
         this.setVideoTime(time).then(() => 
         {
-            this.drawVideo()
+            this.drawVideoTelemetry()
             return this.analyzeCtx(this.ctx)
         }).then(() => 
         {
@@ -171,7 +178,14 @@ class Webcast {
                     resolve()
                 }
             })
-        }).then(() => console.log(this.arrayTextAnalyzed))
+        }).then(() => 
+        {
+            console.log(this.arrayTextAnalyzed)
+            window.setTimeout(() =>
+            {
+                this.stepSection()
+            }, 3000)
+        })
     }
 
     formatText(text)
@@ -185,45 +199,53 @@ class Webcast {
         {
             lastInput = {stage: 2, speed: 0, altitude: 0}
         }
+
         let obj = {}
         text = text.split("\n")
-        if(text.length >= 4)
+        if(text.length >= 4  && text.length <= 7)
         {
-            this.errorEncounter = 0
+            let lineData = 2
+            if(text[1].length == 0)
+            {
+                lineData++
+            }
             let countNumber = 0
-            for(const char of text[2]) {
+            for(const char of text[lineData]) {
                 if(/^\d/.test(char)) { countNumber++ }
             }
             
-            if(countNumber >= 4 && countNumber <= 7)
+            if(countNumber >= 4)
             {
-                text[2] = text[2].replace(/[D|o|O]/g, "0")
-                text[2] = text[2].replace(/ /g, "")
-                text[2] = text[2].replace(/S/g, "5")
-                text[2] = text[2].replace(/B/g, "8")
-                if(/(^[\d]{5})/.test(text[2]))
+                text[lineData] = text[lineData].replace(/[D|o|O]/g, "0")
+                text[lineData] = text[lineData].replace(/ /g, "")
+                text[lineData] = text[lineData].replace(/S/g, "5")
+                text[lineData] = text[lineData].replace(/B/g, "8")
+                if(/(^[\d]{5})/.test(text[lineData]))
                 {
                     obj.speed = parseInt(RegExp.$1)
-                    text[2] = text[2].slice(5)
-                    if(/(^[\d]{2}).*([\d]$)/.exec(text[2]))
+                    text[lineData] = text[lineData].slice(5)
+                    if(/(^[\d]{2}).*([\d]$)/.exec(text[lineData]))
                     {
                         obj.altitude = parseFloat(`${RegExp.$1}.${RegExp.$2}`)
                     }
                     else
                     {
                         obj.altitude = lastInput.altitude
+                        console.log("1", Math.floor(this.$video.currentTime - this.startTime))
                     }
                 }
                 else
                 {
                     obj.speed = lastInput.speed
                     obj.altitude = lastInput.altitude
+                    console.log("2", Math.floor(this.$video.currentTime - this.startTime))
                 }
             }
             else
             {
                 obj.speed = lastInput.speed
                 obj.altitude = lastInput.altitude
+                console.log("3", Math.floor(this.$video.currentTime - this.startTime))
             }
         
             if(/^stage ?([1|2])/i.test(text[0]))
@@ -233,37 +255,50 @@ class Webcast {
             else
             {
                 obj.stage = lastInput.stage
+                console.log("4", Math.floor(this.$video.currentTime - this.startTime))
             }
 
             if(obj.speed != undefined && obj.altitude != undefined && obj.stage != undefined)
             {
+                this.errorEncounter = 0
+                obj.time = Math.floor(this.$video.currentTime - this.startTime)
                 return obj
             }
             else
             {
-                if(this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
+                if(++this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
                 {
-                    this.errorEncounter++
-                    return lastInput
+                    console.log("5", Math.floor(this.$video.currentTime - this.startTime))
+                    return {speed: lastInput.speed, altitude: lastInput.altitude, stage: lastInput.stage, time: Math.floor(this.$video.currentTime - this.startTime)}
                 }
                 else
                 {
-                    return {error: 'Data not available'}
+                    return this.setDataNotAvailable()
                 }
             }
         }
         else
         {
-            if(this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
+            if(++this.errorEncounter <= this.settingsAnalyze.numberOfErrorAccepted)
             {
-                this.errorEncounter++
-                return lastInput
+                console.log("6", Math.floor(this.$video.currentTime - this.startTime))
+                return {speed: lastInput.speed, altitude: lastInput.altitude, stage: lastInput.stage, time: Math.floor(this.$video.currentTime - this.startTime)}
             }
             else
             {
-                return {error: 'Data not available'}
+                return this.setDataNotAvailable()
             }
         }
+    }
+
+    setDataNotAvailable()
+    {
+        for(let i = 1; i <= this.settingsAnalyze.numberOfErrorAccepted; i++)
+        {
+            let oldTime = this.arrayTextAnalyzed[this.arrayTextAnalyzed.length-i].time
+            this.arrayTextAnalyzed[this.arrayTextAnalyzed.length-i] = {error: 'Data not available', time: oldTime}
+        }
+        return {error: 'Data not available', time:Math.floor(this.$video.currentTime - this.startTime)}
     }
 
     calcTotalStepForAnalyze()
@@ -292,5 +327,51 @@ class Webcast {
                 this.$progressBarInner.classList.remove('progress-bar-animated')
             }
         }
+    }
+
+    stepSection()
+    {
+
+        this.$telemetrySection.style.display = 'none'
+        this.$stepSection.style.display = 'flex'
+        this.$video.controls = true
+        this.generateNewStep()
+    }
+
+    generateNewStep()
+    {
+        const stepHTML = `<div class="col-md-6 webcast-step webcast-step-${this.stepId}">
+            <div class="form-group">
+                <label for="webcast-step-name-${this.stepId}">Step ${this.stepId}</label>
+                <select class="form-control" id="webcast-step-name-${this.stepId}">
+                    <option value="Startup">Startup</option>
+                    <option value="Liftoff">Liftoff</option>
+                    <option value="Max-Q">Max-Q</option>
+                    <option value="Main engine cutoff">Main engine cutoff</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="number" class="form-control" id="webcast-step-time-${this.stepId}" value="0">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary webcast-step-time-btn-${this.stepId}" type="button" onclick="webcast.setTimeInput('webcast-step-time-${this.stepId}')">Set</button>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <textarea class="form-control" id="webcast-step-description-${this.stepId}" rows="3" placeholder="Description"></textarea>
+            </div>
+        </div>`
+        this.$stepSection.querySelector('.webcast-step-btn').insertAdjacentHTML('beforebegin', stepHTML)
+        this.stepId++
+    }
+
+    removeLastStep()
+    {
+        if(this.stepId > 1)
+        {
+            this.$stepSection.querySelector(`.webcast-step-${--this.stepId}`).remove()
+        }
+
     }
 }

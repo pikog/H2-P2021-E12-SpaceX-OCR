@@ -17,3 +17,13 @@ body
     transition: width 0.6s ease-out, background-color 0.6s ease-out;
 }
 
+.webcast .webcast-video-container
+{
+    padding-bottom: 15px;
+}
+
+.webcast .webcast-canvas-container
+{
+    padding: 15px;
+}
+
